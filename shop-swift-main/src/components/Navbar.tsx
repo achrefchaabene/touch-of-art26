@@ -7,14 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 
-// ✅ Import image
 import logo from "@/assets/photo_2026-04-11_20-13-59 (2).jpg";
 
 const Navbar = () => {
   const { totalItems } = useCart();
   const { isAuthenticated, logout, user } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const isAr = i18n.language === "ar";
 
   const toggleLang = () => {
@@ -26,21 +25,29 @@ const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-md">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-
-        {/* 🔥 Logo au lieu de Store */}
-        <Link to="/" className="flex items-center gap-2 font-display text-xl font-bold text-primary">
-          <img 
-            src={logo} 
-            alt="logo" 
-            className="h-8 w-8 object-cover rounded-full"
+      <div className="container mx-auto flex flex-col gap-3 px-4 py-3 md:h-16 md:flex-row md:items-center md:justify-between md:py-0">
+        <Link to="/" className="flex min-w-0 items-center gap-3 text-primary">
+          <img
+            src={logo}
+            alt="Touch of Art"
+            className="h-10 w-10 shrink-0 rounded-full object-cover md:h-11 md:w-11"
           />
-          Touch Of Art
+
+          <div className="min-w-0 leading-none">
+            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.35em] text-muted-foreground">
+              Boutique
+            </p>
+            <p className="truncate font-display text-lg font-bold sm:text-xl md:text-2xl">
+              Touch of Art
+            </p>
+          </div>
         </Link>
 
-        <nav className="flex items-center gap-2">
+        <nav className="flex w-full flex-wrap items-center justify-between gap-2 sm:justify-end md:w-auto">
           <Link to="/">
-            <Button variant="ghost" size="sm">Boutique</Button>
+            <Button variant="ghost" size="sm" className="px-3 text-xs sm:text-sm">
+              Boutique
+            </Button>
           </Link>
 
           <Link to="/cart" className="relative">
@@ -54,17 +61,15 @@ const Navbar = () => {
             </Button>
           </Link>
 
-          {/* Dark / Light */}
           <Button variant="ghost" size="icon" onClick={toggleTheme}>
             {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
 
-          {/* Langue */}
           <Button
             variant="ghost"
             size="sm"
             onClick={toggleLang}
-            className="gap-1 text-xs font-semibold"
+            className="gap-1 px-3 text-xs font-semibold"
           >
             <Languages className="h-4 w-4" />
             {isAr ? "FR" : "AR"}
@@ -103,13 +108,15 @@ const Navbar = () => {
                 </Button>
               </Link>
 
-              <Button variant="outline" size="sm" onClick={logout}>
-                Déconnexion
+              <Button variant="outline" size="sm" className="px-3 text-xs sm:text-sm" onClick={logout}>
+                Deconnexion
               </Button>
             </>
           ) : (
             <Link to="/login">
-              <Button size="sm">Connexion</Button>
+              <Button size="sm" className="px-3 text-xs sm:text-sm">
+                Connexion
+              </Button>
             </Link>
           )}
         </nav>

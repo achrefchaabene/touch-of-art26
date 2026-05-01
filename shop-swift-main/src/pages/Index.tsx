@@ -77,9 +77,11 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      <section className="border-b bg-primary px-4 py-14 text-center text-primary-foreground">
-        <h1 className="font-display text-4xl font-bold md:text-5xl">Touch Of Art</h1>
-        <p className="mx-auto mt-3 max-w-lg text-primary-foreground/80">This Is Art</p>
+      <section className="border-b bg-primary px-4 py-10 text-center text-primary-foreground sm:py-12 md:py-14">
+        <h1 className="font-display text-3xl font-bold sm:text-4xl md:text-5xl">Touch of Art</h1>
+        <p className="mx-auto mt-3 max-w-lg text-sm text-primary-foreground/80 sm:text-base">
+          L&apos;art qui vous ressemble
+        </p>
 
         <div className="mx-auto mt-8 max-w-xl">
           <div className="relative flex items-center">
@@ -109,7 +111,7 @@ const Index = () => {
       </section>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap gap-2">
             {categories.map((category) => (
               <Button
@@ -117,13 +119,14 @@ const Index = () => {
                 size="sm"
                 variant={activeCategory === category ? "default" : "outline"}
                 onClick={() => setActiveCategory(category)}
+                className="max-w-full whitespace-normal text-left"
               >
                 {category}
               </Button>
             ))}
           </div>
 
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center lg:w-auto">
             <p className="text-sm text-muted-foreground">
               {loading
                 ? "Chargement..."
@@ -131,7 +134,7 @@ const Index = () => {
             </p>
 
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="h-8 w-44 text-xs">
+              <SelectTrigger className="h-9 w-full text-xs sm:w-48">
                 <ArrowUpDown className="mr-1 h-3 w-3" />
                 <SelectValue placeholder="Trier par" />
               </SelectTrigger>
