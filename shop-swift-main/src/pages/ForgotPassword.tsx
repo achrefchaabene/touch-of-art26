@@ -6,8 +6,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:9000";
+import { API_URL } from "@/lib/api";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -95,4 +94,3 @@ const ForgotPassword = () => {
 };
 
 export default ForgotPassword;
-

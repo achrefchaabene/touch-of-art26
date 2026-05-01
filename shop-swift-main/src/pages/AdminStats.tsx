@@ -5,12 +5,11 @@ import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart2, TrendingUp, ShoppingBag, Banknote, RefreshCw, CircleDollarSign } from "lucide-react";
+import { API_URL } from "@/lib/api";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, Legend,
 } from "recharts";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:9000";
 
 interface Stats {
   totalOrders: number;
@@ -204,4 +203,3 @@ const AdminStats = () => {
 };
 
 export default AdminStats;
-

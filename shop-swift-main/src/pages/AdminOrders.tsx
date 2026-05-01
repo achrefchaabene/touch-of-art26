@@ -31,9 +31,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { API_URL } from "@/lib/api";
 import type { Order as BaseOrder, OrderHistoryEntry, Product, ShippingInfo } from "@/types";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:9000";
 const POLL_INTERVAL = 30_000;
 
 type ProductOption = Product & {
@@ -116,7 +115,7 @@ const escapeHtml = (value: string) =>
 
 const getReadableErrorMessage = (error: unknown, fallback: string) => {
   if (error instanceof TypeError && error.message === "Failed to fetch") {
-    return "Impossible de contacter le backend. Verifiez que le serveur backend tourne bien sur http://localhost:9000 puis rechargez la page.";
+    return "Impossible de contacter le backend. Verifiez que VITE_API_URL pointe bien vers votre backend Render puis rechargez la page.";
   }
 
   if (error instanceof Error && error.message) {

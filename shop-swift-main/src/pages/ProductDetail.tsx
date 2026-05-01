@@ -10,8 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import { Review } from "@/types";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:9000";
+import { API_URL } from "@/lib/api";
 
 const StarRating = ({ value, onChange }: { value: number; onChange?: (v: number) => void }) => (
   <div className="flex gap-1">

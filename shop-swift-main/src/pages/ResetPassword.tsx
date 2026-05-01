@@ -6,8 +6,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import { KeyRound, ArrowLeft, Eye, EyeOff } from "lucide-react";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:9000";
+import { API_URL } from "@/lib/api";
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
@@ -125,4 +124,3 @@ const ResetPassword = () => {
 };
 
 export default ResetPassword;
-

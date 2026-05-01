@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { User, Order } from "@/types";
 import { toast } from "@/hooks/use-toast";
+import { API_URL } from "@/lib/api";
 
 interface AuthContextType {
   user: User | null;
@@ -23,8 +24,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:9000";
 
 const USER_KEY = "shopswift_user";
 

@@ -2,8 +2,7 @@ import React, { createContext, useContext, useEffect, useState, type ReactNode }
 
 import type { Product } from "@/types";
 import { toast } from "@/hooks/use-toast";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:9000";
+import { API_URL } from "@/lib/api";
 
 interface ProductContextType {
   products: Product[];
