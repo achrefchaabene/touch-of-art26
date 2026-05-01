@@ -1,0 +1,85 @@
+{
+  "nav": {
+    "shop":       "Boutique",
+    "cart":       "Panier",
+    "login":      "Connexion",
+    "logout":     "Déconnexion",
+    "dashboard":  "Mon compte",
+    "admin":      "Admin",
+    "orders":     "Commandes",
+    "categories": "Catégories",
+    "stats":      "Statistiques"
+  },
+  "home": {
+    "tagline":    "This Is Art",
+    "searchPlaceholder": "Rechercher un produit…",
+    "allCategories": "Tous",
+    "noProducts": "Aucun produit trouvé",
+    "clearSearch": "Effacer la recherche",
+    "sortDefault": "Par défaut",
+    "sortPriceAsc": "Prix croissant",
+    "sortPriceDesc": "Prix décroissant",
+    "sortRating": "Meilleures notes"
+  },
+  "product": {
+    "addToCart":   "Ajouter au panier",
+    "inStock":     "En stock",
+    "outOfStock":  "Rupture de stock",
+    "reviews":     "avis",
+    "noReviews":   "Aucun avis pour le moment.",
+    "writeReview": "Écrire un avis",
+    "yourRating":  "Votre note",
+    "yourComment": "Votre commentaire",
+    "submit":      "Publier",
+    "edit":        "Modifier",
+    "delete":      "Supprimer",
+    "similar":     "Vous aimerez aussi",
+    "salebadge":   "Promo"
+  },
+  "cart": {
+    "title":      "Votre panier",
+    "empty":      "Votre panier est vide",
+    "total":      "Total",
+    "checkout":   "Commander",
+    "remove":     "Supprimer",
+    "quantity":   "Quantité"
+  },
+  "login": {
+    "title":         "Connexion",
+    "register":      "Créer un compte",
+    "email":         "Email",
+    "password":      "Mot de passe",
+    "name":          "Nom",
+    "signIn":        "Se connecter",
+    "signUp":        "S'inscrire",
+    "haveAccount":   "Déjà un compte ?",
+    "noAccount":     "Pas encore de compte ?",
+    "forgotPw":      "Mot de passe oublié ?"
+  },
+  "dashboard": {
+    "myOrders":    "Mes commandes",
+    "editProfile": "Modifier le profil",
+    "save":        "Enregistrer",
+    "cancel":      "Annuler",
+    "logout":      "Déconnexion",
+    "noOrders":    "Aucune commande pour le moment.",
+    "history":     "Historique"
+  },
+  "status": {
+    "pending":    "En attente",
+    "accepted":   "Acceptée",
+    "rejected":   "Refusée",
+    "processing": "En traitement",
+    "shipped":    "Expédiée",
+    "delivered":  "Livrée"
+  },
+  "common": {
+    "loading":  "Chargement…",
+    "error":    "Erreur",
+    "success":  "Succès",
+    "confirm":  "Confirmer",
+    "back":     "Retour",
+    "currency": "DT"
+  }
+}
+

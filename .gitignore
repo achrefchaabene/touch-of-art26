@@ -1,0 +1,12 @@
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+*.log
+*.local
+.env
+**/.env
+.DS_Store
+Thumbs.db
+.vscode/
+__MACOSX/

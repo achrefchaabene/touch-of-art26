@@ -1,0 +1,85 @@
+{
+  "nav": {
+    "shop":       "المتجر",
+    "cart":       "السلة",
+    "login":      "تسجيل الدخول",
+    "logout":     "تسجيل الخروج",
+    "dashboard":  "حسابي",
+    "admin":      "الإدارة",
+    "orders":     "الطلبات",
+    "categories": "الفئات",
+    "stats":      "الإحصائيات"
+  },
+  "home": {
+    "tagline":    "هذا هو الفن",
+    "searchPlaceholder": "ابحث عن منتج…",
+    "allCategories": "الكل",
+    "noProducts": "لا توجد منتجات",
+    "clearSearch": "مسح البحث",
+    "sortDefault": "افتراضي",
+    "sortPriceAsc": "السعر: من الأقل",
+    "sortPriceDesc": "السعر: من الأعلى",
+    "sortRating": "الأعلى تقييماً"
+  },
+  "product": {
+    "addToCart":   "أضف إلى السلة",
+    "inStock":     "متوفر",
+    "outOfStock":  "نفد المخزون",
+    "reviews":     "تقييمات",
+    "noReviews":   "لا توجد تقييمات بعد.",
+    "writeReview": "اكتب تقييماً",
+    "yourRating":  "تقييمك",
+    "yourComment": "تعليقك",
+    "submit":      "نشر",
+    "edit":        "تعديل",
+    "delete":      "حذف",
+    "similar":     "قد يعجبك أيضاً",
+    "salebadge":   "تخفيض"
+  },
+  "cart": {
+    "title":      "سلة المشتريات",
+    "empty":      "سلتك فارغة",
+    "total":      "المجموع",
+    "checkout":   "إتمام الطلب",
+    "remove":     "إزالة",
+    "quantity":   "الكمية"
+  },
+  "login": {
+    "title":         "تسجيل الدخول",
+    "register":      "إنشاء حساب",
+    "email":         "البريد الإلكتروني",
+    "password":      "كلمة المرور",
+    "name":          "الاسم",
+    "signIn":        "دخول",
+    "signUp":        "تسجيل",
+    "haveAccount":   "لديك حساب؟",
+    "noAccount":     "ليس لديك حساب؟",
+    "forgotPw":      "نسيت كلمة المرور؟"
+  },
+  "dashboard": {
+    "myOrders":    "طلباتي",
+    "editProfile": "تعديل الملف الشخصي",
+    "save":        "حفظ",
+    "cancel":      "إلغاء",
+    "logout":      "تسجيل الخروج",
+    "noOrders":    "لا توجد طلبات بعد.",
+    "history":     "السجل"
+  },
+  "status": {
+    "pending":    "في الانتظار",
+    "accepted":   "مقبول",
+    "rejected":   "مرفوض",
+    "processing": "قيد المعالجة",
+    "shipped":    "تم الشحن",
+    "delivered":  "تم التسليم"
+  },
+  "common": {
+    "loading":  "جارٍ التحميل…",
+    "error":    "خطأ",
+    "success":  "نجاح",
+    "confirm":  "تأكيد",
+    "back":     "رجوع",
+    "currency": "دينار"
+  }
+}
+
