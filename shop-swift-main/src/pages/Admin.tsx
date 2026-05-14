@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { API_URL } from "@/lib/api";
+import { resolveProductImage } from "@/lib/product-image";
 
 const emptyForm = {
   name: "",
@@ -117,11 +117,7 @@ const Admin = () => {
       rating: product.rating.toString(),
     });
     setImageFile(null);
-    setImagePreview(
-      product.image?.startsWith("/uploads/")
-        ? `${API_URL}${product.image}`
-        : product.image || "",
-    );
+    setImagePreview(resolveProductImage(product.image));
     setEditingId(product.id);
     setDialogOpen(true);
   };
@@ -350,7 +346,7 @@ const Admin = () => {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <img
-                          src={product.image?.startsWith("/uploads/") ? `${API_URL}${product.image}` : product.image}
+                          src={resolveProductImage(product.image)}
                           alt={product.name}
                           className="h-10 w-10 rounded object-cover"
                         />

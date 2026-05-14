@@ -10,7 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import { Review } from "@/types";
-import { API_URL } from "@/lib/api";
+import { getPlaceholderImage, resolveProductImage } from "@/lib/product-image";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:9000";
 
 const StarRating = ({ value, onChange }: { value: number; onChange?: (v: number) => void }) => (
   <div className="flex gap-1">
@@ -176,12 +178,13 @@ const ProductDetail = () => {
         <div className="grid gap-10 md:grid-cols-2">
           <div className="overflow-hidden rounded-lg border">
             <img
-              src={product.image || "/placeholder.png"}
+              src={resolveProductImage(product.image)}
               alt={product.name}
               className="h-full w-full object-cover"
               onError={(e) => {
                 const t = e.currentTarget;
-                if (t.src !== window.location.origin + "/placeholder.png") t.src = "/placeholder.png";
+                const placeholder = new URL(getPlaceholderImage(), window.location.origin).toString();
+                if (t.src !== placeholder) t.src = getPlaceholderImage();
               }}
             />
           </div>

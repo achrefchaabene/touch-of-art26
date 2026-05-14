@@ -2,7 +2,9 @@ import React, { createContext, useContext, useEffect, useState, type ReactNode }
 
 import type { Product } from "@/types";
 import { toast } from "@/hooks/use-toast";
-import { API_URL } from "@/lib/api";
+import { resolveProductImage } from "@/lib/product-image";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:9000";
 
 interface ProductContextType {
   products: Product[];
@@ -24,6 +26,11 @@ const getErrorMessage = async (response: Response, fallback: string) => {
   return errorPayload.message || fallback;
 };
 
+const normalizeProduct = (product: Product): Product => ({
+  ...product,
+  image: resolveProductImage(product.image),
+});
+
 export const ProductProvider = ({ children }: { children: ReactNode }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>(["Tous"]);
@@ -33,7 +40,7 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
     try {
       const res = await fetch(`${API_URL}/api/products`);
       const prods: Product[] = await res.json();
-      setProducts(prods);
+      setProducts(prods.map(normalizeProduct));
     } catch {
       // silence
     }
@@ -48,7 +55,7 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
         ]);
         const prods: Product[] = await prodRes.json();
         const cats: string[] = await catRes.json();
-        setProducts(prods);
+        setProducts(prods.map(normalizeProduct));
         setCategories(["Tous", ...cats]);
       } catch {
         toast({
@@ -80,7 +87,7 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
       }
 
       const newProduct: Product = await res.json();
-      setProducts((prev) => [newProduct, ...prev]);
+      setProducts((prev) => [normalizeProduct(newProduct), ...prev]);
       toast({ title: "Produit cree", description: `${product.name} a ete ajoute.` });
     } catch (err: any) {
       toast({ title: "Erreur", description: err.message, variant: "destructive" });
@@ -107,7 +114,7 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
       }
 
       const updated: Product = await res.json();
-      setProducts((prev) => prev.map((product) => (product.id === id ? updated : product)));
+      setProducts((prev) => prev.map((product) => (product.id === id ? normalizeProduct(updated) : product)));
       toast({ title: "Produit modifie", description: "Les modifications ont ete enregistrees." });
     } catch (err: any) {
       toast({ title: "Erreur", description: err.message, variant: "destructive" });

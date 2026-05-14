@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import Navbar from "@/components/Navbar";
 import { ShippingInfo } from "@/types";
+import { resolveProductImage } from "@/lib/product-image";
 
 const FREE_SHIPPING_THRESHOLD = 100;
 const SHIPPING_FEE = 7;
@@ -151,7 +152,7 @@ const Cart = () => {
                 className="flex gap-4 rounded-lg border bg-card p-4"
               >
                 <img
-                  src={product.image}
+                  src={resolveProductImage(product.image)}
                   alt={product.name}
                   className="h-24 w-24 rounded-md object-cover"
                 />

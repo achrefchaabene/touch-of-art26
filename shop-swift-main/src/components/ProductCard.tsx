@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { ShoppingCart, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { getPlaceholderImage, resolveProductImage } from "@/lib/product-image";
 
 const ProductCard = ({ product, highlighted = false }: { product: Product; highlighted?: boolean }) => {
   const { addItem } = useCart();
@@ -27,14 +28,15 @@ const ProductCard = ({ product, highlighted = false }: { product: Product; highl
             </span>
           )}
           <img
-            src={product.image || "/placeholder.png"}
+            src={resolveProductImage(product.image)}
             alt={product.name}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
             onError={(e) => {
               const t = e.currentTarget;
-              if (t.src !== window.location.origin + "/placeholder.png") {
-                t.src = "/placeholder.png";
+              const placeholder = new URL(getPlaceholderImage(), window.location.origin).toString();
+              if (t.src !== placeholder) {
+                t.src = getPlaceholderImage();
               }
             }}
           />
