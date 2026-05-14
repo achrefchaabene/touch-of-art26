@@ -19,20 +19,42 @@ import Category from "./models/Category.js";
 dotenv.config();
 
 const app = express();
-const allowedOrigins = (process.env.CORS_ORIGINS || "")
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean);
+
+const parseAllowedOrigins = (value) =>
+  (value || "")
+    .split(/[\s,;]+/)
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+const allowedOrigins = parseAllowedOrigins(process.env.CORS_ORIGINS);
+const isOriginAllowed = (origin) => {
+  if (!origin || allowedOrigins.length === 0) {
+    return true;
+  }
+
+  return allowedOrigins.some((allowedOrigin) => {
+    if (allowedOrigin === origin) {
+      return true;
+    }
+
+    if (allowedOrigin.startsWith("*.")) {
+      const suffix = allowedOrigin.slice(1);
+      return origin.endsWith(suffix);
+    }
+
+    return false;
+  });
+};
 
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+      if (isOriginAllowed(origin)) {
         callback(null, true);
         return;
       }
 
-      callback(new Error("CORS origin not allowed"));
+      callback(new Error(`CORS origin not allowed: ${origin}`));
     },
     credentials: true,
   })
