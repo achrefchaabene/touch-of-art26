@@ -1,5 +1,6 @@
 // routes/productRoutes.js
 import express from "express";
+import fs from "fs";
 import multer from "multer";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -7,18 +8,33 @@ import Product from "../models/Product.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const uploadsDir = path.join(__dirname, "../uploads");
+
+fs.mkdirSync(uploadsDir, { recursive: true });
 
 const router = express.Router();
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
-    cb(null, path.join(__dirname, "../uploads"));
+    cb(null, uploadsDir);
   },
   filename: (_req, file, cb) => {
     const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
     cb(null, unique + path.extname(file.originalname));
   },
 });
+
+const singleImageUpload = (req, res, next) => {
+  upload.single("image")(req, res, (err) => {
+    if (!err) {
+      next();
+      return;
+    }
+
+    const status = err instanceof multer.MulterError ? 400 : 400;
+    res.status(status).json({ message: err.message || "Impossible de televerser l'image." });
+  });
+};
 
 const upload = multer({
   storage,
@@ -92,7 +108,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.post("/", upload.single("image"), async (req, res) => {
+router.post("/", singleImageUpload, async (req, res) => {
   try {
     const data = normalizeProductPayload(req.body);
     if (!data.barcode) {
@@ -111,7 +127,7 @@ router.post("/", upload.single("image"), async (req, res) => {
   }
 });
 
-router.put("/:id", upload.single("image"), async (req, res) => {
+router.put("/:id", singleImageUpload, async (req, res) => {
   try {
     const data = normalizeProductPayload(req.body);
     if ("barcode" in data && !data.barcode) {
