@@ -17,7 +17,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<User | null>;
   register: (name: string, email: string, password: string) => Promise<User | null>;
   logout: () => void;
-  placeOrder: (order: Omit<Order, "id" | "date" | "status">) => Promise<void>;
+  placeOrder: (order: Omit<Order, "id" | "date" | "status">) => Promise<boolean>;
   updateOrderStatus: (orderId: string, status: Order["status"]) => Promise<void>;
   refreshOrders: () => Promise<void>;
   isAuthenticated: boolean;
@@ -109,10 +109,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       if (!res.ok) throw new Error("Impossible de passer la commande");
       const newOrder: Order = await res.json();
-      setOrders((prev) => [newOrder, ...prev]);
+      if (orderData.userId) {
+        setOrders((prev) => [newOrder, ...prev]);
+      }
       toast({ title: "Commande envoyée 🚀", description: "L'administrateur a reçu votre commande." });
+      return true;
     } catch (err: any) {
       toast({ title: "Erreur", description: err.message, variant: "destructive" });
+      return false;
     }
   };
 

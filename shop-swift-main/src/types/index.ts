@@ -40,9 +40,9 @@ export interface OrderHistoryEntry {
 
 export interface Order {
   id: string;
-  userId: string;
+  userId?: string;
   userName: string;
-  userEmail: string;
+  userEmail?: string;
   shipping: ShippingInfo;
   items: { product: Product; quantity: number }[];
   total: number;

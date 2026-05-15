@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   Trash2,
   Plus,
@@ -35,7 +35,6 @@ const Cart = () => {
     useCart();
   const { user, isAuthenticated, placeOrder } = useAuth();
   const { refreshProducts } = useProducts();
-  const navigate = useNavigate();
   const [showConfirm, setShowConfirm] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [shipping, setShipping] = useState<ShippingInfo>({
@@ -46,15 +45,6 @@ const Cart = () => {
   });
 
   const handleCheckout = () => {
-    if (!isAuthenticated) {
-      toast({
-        title: "Connexion requise",
-        description: "Veuillez vous connecter pour commander.",
-        variant: "destructive",
-      });
-      navigate("/login");
-      return;
-    }
     setShowConfirm(true);
   };
 
@@ -69,19 +59,20 @@ const Cart = () => {
   const totalWithShipping = totalPrice + shippingCost;
 
   const confirmOrder = async () => {
-    if (!user || !isShippingValid) return;
+    if (!isShippingValid) return;
 
     const orderData = {
-      userId: user.id,
+      userId: user?.id,
       userName: `${shipping.firstName} ${shipping.lastName}`,
-      userEmail: user.email,
+      userEmail: user?.email,
       shipping,
       items: items.map(({ product, quantity }) => ({ product, quantity })),
       total: totalWithShipping,
     };
 
-    await placeOrder(orderData);
-    // Rafraîchir les stocks affichés dans toute l'application
+    const orderCreated = await placeOrder(orderData);
+    if (!orderCreated) return;
+
     await refreshProducts();
 
     clearCart();
@@ -103,9 +94,11 @@ const Cart = () => {
             Merci pour votre achat. L'administrateur a reçu votre commande.
           </p>
           <div className="mt-6 flex gap-3">
-            <Link to="/dashboard">
-              <Button>Voir mes commandes</Button>
-            </Link>
+            {isAuthenticated && (
+              <Link to="/dashboard">
+                <Button>Voir mes commandes</Button>
+              </Link>
+            )}
             <Link to="/">
               <Button variant="outline">Continuer mes achats</Button>
             </Link>
@@ -254,6 +247,11 @@ const Cart = () => {
             <DialogTitle>Confirmer votre commande</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {!isAuthenticated && (
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm text-muted-foreground">
+                Vous pouvez commander sans creer de compte. Entrez simplement votre numero de telephone et votre adresse.
+              </div>
+            )}
             {/* Shipping form */}
             <div className="rounded-lg border p-4 space-y-3">
               <h3 className="font-semibold text-sm text-muted-foreground">
