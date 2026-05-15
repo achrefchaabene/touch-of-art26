@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -9,7 +8,6 @@ import {
   ArrowLeft,
   CheckCircle,
 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useProducts } from "@/context/ProductContext";
@@ -48,11 +46,13 @@ const Cart = () => {
     setShowConfirm(true);
   };
 
-  const isShippingValid =
+  const customerName = `${shipping.firstName} ${shipping.lastName}`.trim();
+  const isShippingValid = Boolean(
     shipping.firstName.trim() &&
-    shipping.lastName.trim() &&
-    shipping.phone.trim() &&
-    shipping.address.trim();
+      shipping.phone.trim() &&
+      shipping.address.trim() &&
+      (isAuthenticated ? shipping.lastName.trim() : true)
+  );
 
   const shippingCost =
     totalPrice > FREE_SHIPPING_THRESHOLD || totalPrice === 0 ? 0 : SHIPPING_FEE;
@@ -63,7 +63,7 @@ const Cart = () => {
 
     const orderData = {
       userId: user?.id,
-      userName: `${shipping.firstName} ${shipping.lastName}`,
+      userName: customerName,
       userEmail: user?.email,
       shipping,
       items: items.map(({ product, quantity }) => ({ product, quantity })),
@@ -88,10 +88,10 @@ const Cart = () => {
         <div className="flex flex-col items-center justify-center py-32">
           <CheckCircle className="h-16 w-16 text-green-500" />
           <h2 className="mt-4 font-display text-2xl font-bold">
-            Commande confirmée !
+            Commande confirmee !
           </h2>
           <p className="mt-2 text-muted-foreground">
-            Merci pour votre achat. L'administrateur a reçu votre commande.
+            Merci pour votre achat. L&apos;administrateur a recu votre commande.
           </p>
           <div className="mt-6 flex gap-3">
             {isAuthenticated && (
@@ -118,7 +118,7 @@ const Cart = () => {
             Votre panier est vide.
           </p>
           <Link to="/">
-            <Button className="mt-4">Découvrir nos produits</Button>
+            <Button className="mt-4">Decouvrir nos produits</Button>
           </Link>
         </div>
       </div>
@@ -131,7 +131,7 @@ const Cart = () => {
       <main className="container mx-auto px-4 py-8">
         <Link
           to="/"
-          className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" /> Continuer mes achats
         </Link>
@@ -153,7 +153,7 @@ const Cart = () => {
                   <div>
                     <Link
                       to={`/product/${product.id}`}
-                      className="font-semibold hover:text-primary transition-colors"
+                      className="font-semibold transition-colors hover:text-primary"
                     >
                       {product.name}
                     </Link>
@@ -201,7 +201,7 @@ const Cart = () => {
           </div>
 
           <div className="rounded-lg border bg-card p-6">
-            <h2 className="font-display text-xl font-bold">Résumé</h2>
+            <h2 className="font-display text-xl font-bold">Resume</h2>
             <div className="mt-4 space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Sous-total</span>
@@ -242,47 +242,83 @@ const Cart = () => {
       </main>
 
       <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Confirmer votre commande</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             {!isAuthenticated && (
-              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm text-muted-foreground">
-                Vous pouvez commander sans creer de compte. Entrez simplement votre numero de telephone et votre adresse.
+              <div className="space-y-3 rounded-lg border border-primary/20 bg-primary/5 p-4">
+                <p className="text-sm font-medium text-foreground">
+                  Vous pouvez commander sans creer de compte.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Remplissez simplement votre nom, votre numero de telephone et votre adresse.
+                  La commande sera envoyee directement a l&apos;admin.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Link to="/login">
+                    <Button variant="outline" size="sm">
+                      J&apos;ai deja un compte
+                    </Button>
+                  </Link>
+                  <Link to="/register">
+                    <Button size="sm">Creer un compte</Button>
+                  </Link>
+                </div>
               </div>
             )}
-            {/* Shipping form */}
-            <div className="rounded-lg border p-4 space-y-3">
-              <h3 className="font-semibold text-sm text-muted-foreground">
-                Informations de livraison
+
+            <div className="space-y-3 rounded-lg border p-4">
+              <h3 className="text-sm font-semibold text-muted-foreground">
+                {isAuthenticated ? "Informations de livraison" : "Commande sans compte"}
               </h3>
-              <div className="grid grid-cols-2 gap-3">
+
+              {isAuthenticated ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="firstName">Prenom *</Label>
+                    <Input
+                      id="firstName"
+                      placeholder="Prenom"
+                      value={shipping.firstName}
+                      onChange={(e) =>
+                        setShipping((s) => ({ ...s, firstName: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="lastName">Nom *</Label>
+                    <Input
+                      id="lastName"
+                      placeholder="Nom"
+                      value={shipping.lastName}
+                      onChange={(e) =>
+                        setShipping((s) => ({ ...s, lastName: e.target.value }))
+                      }
+                    />
+                  </div>
+                </div>
+              ) : (
                 <div className="space-y-1">
-                  <Label htmlFor="firstName">Prénom *</Label>
+                  <Label htmlFor="firstName">Nom complet *</Label>
                   <Input
                     id="firstName"
-                    placeholder="Prénom"
+                    placeholder="Nom et prenom"
                     value={shipping.firstName}
                     onChange={(e) =>
-                      setShipping((s) => ({ ...s, firstName: e.target.value }))
+                      setShipping((s) => ({
+                        ...s,
+                        firstName: e.target.value,
+                        lastName: "",
+                      }))
                     }
                   />
                 </div>
-                <div className="space-y-1">
-                  <Label htmlFor="lastName">Nom *</Label>
-                  <Input
-                    id="lastName"
-                    placeholder="Nom"
-                    value={shipping.lastName}
-                    onChange={(e) =>
-                      setShipping((s) => ({ ...s, lastName: e.target.value }))
-                    }
-                  />
-                </div>
-              </div>
+              )}
+
               <div className="space-y-1">
-                <Label htmlFor="phone">Téléphone *</Label>
+                <Label htmlFor="phone">Telephone *</Label>
                 <Input
                   id="phone"
                   type="tel"
@@ -294,7 +330,7 @@ const Cart = () => {
                 />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="address">Adresse complète *</Label>
+                <Label htmlFor="address">Adresse complete *</Label>
                 <Input
                   id="address"
                   placeholder="Rue, ville, code postal"
@@ -306,9 +342,8 @@ const Cart = () => {
               </div>
             </div>
 
-            {/* Order summary */}
             <div className="rounded-lg border p-4">
-              <h3 className="font-semibold text-sm text-muted-foreground mb-2">
+              <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
                 Articles ({items.length})
               </h3>
               <div className="space-y-2">
@@ -318,7 +353,7 @@ const Cart = () => {
                     className="flex justify-between text-sm"
                   >
                     <span>
-                      {product.name} × {quantity}
+                      {product.name} x {quantity}
                     </span>
                     <span className="font-medium">
                       {(product.price * quantity).toFixed(2)} DT
@@ -338,7 +373,7 @@ const Cart = () => {
                     : `${shippingCost.toFixed(2)} DT`}
                 </span>
               </div>
-              <div className="mt-3 border-t pt-2 flex justify-between font-bold">
+              <div className="mt-3 flex justify-between border-t pt-2 font-bold">
                 <span>Total</span>
                 <span>{totalWithShipping.toFixed(2)} DT</span>
               </div>
