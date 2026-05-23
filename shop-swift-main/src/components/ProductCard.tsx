@@ -1,7 +1,7 @@
 import { Product } from "@/types";
 import { useCart } from "@/context/CartContext";
 import { Link } from "react-router-dom";
-import { ShoppingCart, Star } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getPlaceholderImage, resolveProductImage } from "@/lib/product-image";
@@ -60,10 +60,6 @@ const ProductCard = ({ product, highlighted = false }: { product: Product; highl
             {product.name}
           </h3>
         </Link>
-        <div className="mt-1 flex items-center gap-1">
-          <Star className="h-3.5 w-3.5 fill-accent text-accent" />
-          <span className="text-sm text-muted-foreground">{product.rating}</span>
-        </div>
         <div className="mt-3 flex items-center justify-between">
           <div className="flex flex-col">
             {product.salePrice && product.salePrice < product.price ? (
