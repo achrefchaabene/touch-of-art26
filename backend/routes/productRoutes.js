@@ -1,28 +1,10 @@
 // routes/productRoutes.js
 import express from "express";
-import fs from "fs";
 import multer from "multer";
-import path from "path";
-import { fileURLToPath } from "url";
 import Product from "../models/Product.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const uploadsDir = path.join(__dirname, "../uploads");
-
-fs.mkdirSync(uploadsDir, { recursive: true });
+import { deleteStoredImage, storeUploadedImage } from "../services/imageStorage.js";
 
 const router = express.Router();
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (_req, file, cb) => {
-    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, unique + path.extname(file.originalname));
-  },
-});
 
 const singleImageUpload = (req, res, next) => {
   upload.single("image")(req, res, (err) => {
@@ -37,7 +19,7 @@ const singleImageUpload = (req, res, next) => {
 };
 
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (file.mimetype.startsWith("image/")) cb(null, true);
@@ -115,7 +97,7 @@ router.post("/", singleImageUpload, async (req, res) => {
       return res.status(400).json({ message: "Le code-barres est obligatoire." });
     }
     if (req.file) {
-      data.image = `/uploads/${req.file.filename}`;
+      data.image = await storeUploadedImage(req.file);
     }
     if (!data.image) {
       data.image = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&h=600&fit=crop";
@@ -133,17 +115,26 @@ router.put("/:id", singleImageUpload, async (req, res) => {
     if ("barcode" in data && !data.barcode) {
       return res.status(400).json({ message: "Le code-barres est obligatoire." });
     }
-    if (req.file) {
-      data.image = `/uploads/${req.file.filename}`;
+
+    const existingProduct = await Product.findById(req.params.id);
+    if (!existingProduct) {
+      return res.status(404).json({ message: "Produit introuvable." });
     }
+
+    if (req.file) {
+      data.image = await storeUploadedImage(req.file);
+    }
+
     const product = await Product.findByIdAndUpdate(
       req.params.id,
       data,
       { new: true, runValidators: true },
     );
-    if (!product) {
-      return res.status(404).json({ message: "Produit introuvable." });
+
+    if (req.file && existingProduct.image !== data.image) {
+      await deleteStoredImage(existingProduct.image);
     }
+
     res.json(product);
   } catch (err) {
     handleProductError(res, err);
@@ -152,7 +143,12 @@ router.put("/:id", singleImageUpload, async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   try {
-    await Product.findByIdAndDelete(req.params.id);
+    const product = await Product.findByIdAndDelete(req.params.id);
+    if (!product) {
+      return res.status(404).json({ message: "Produit introuvable." });
+    }
+
+    await deleteStoredImage(product.image);
     res.json({ message: "Produit supprime." });
   } catch (err) {
     handleProductError(res, err);
