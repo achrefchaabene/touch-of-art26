@@ -210,7 +210,7 @@ const ProductDetail = () => {
 
             <p className="mt-4 leading-relaxed text-muted-foreground">{product.description}</p>
 
-            {product.salePrice && product.salePrice < product.price ? (
+            {product.salePrice != null && product.salePrice < product.price ? (
               <div className="mt-6 flex items-baseline gap-3">
                 <span className="font-display text-3xl font-bold text-red-500">{product.salePrice.toFixed(2)} DT</span>
                 <span className="text-lg line-through text-muted-foreground">{product.price.toFixed(2)} DT</span>
