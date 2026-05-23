@@ -2,11 +2,15 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import sharp from "sharp";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const uploadsDir = path.join(__dirname, "../uploads");
 const cloudinaryFolder = process.env.CLOUDINARY_FOLDER || "touch-of-art/products";
+const MAX_IMAGE_WIDTH = Number(process.env.PRODUCT_IMAGE_MAX_WIDTH || 1600);
+const JPEG_QUALITY = Number(process.env.PRODUCT_IMAGE_JPEG_QUALITY || 82);
+const WEBP_QUALITY = Number(process.env.PRODUCT_IMAGE_WEBP_QUALITY || 82);
 
 await fs.promises.mkdir(uploadsDir, { recursive: true });
 
@@ -16,6 +20,69 @@ const isCloudinaryConfigured = () =>
     process.env.CLOUDINARY_API_KEY &&
     process.env.CLOUDINARY_API_SECRET,
   );
+
+const optimizeImage = async (file) => {
+  if (!file?.buffer) return file;
+
+  try {
+    const source = sharp(file.buffer, { failOn: "none", animated: true }).rotate();
+    const metadata = await source.metadata();
+    const format = (metadata.format || "").toLowerCase();
+
+    // Keep vector and animated assets intact so we don't break them.
+    if (format === "svg" || format === "gif") {
+      return file;
+    }
+
+    const shouldResize = Boolean(metadata.width && metadata.width > MAX_IMAGE_WIDTH);
+
+    let pipeline = source;
+    if (shouldResize) {
+      pipeline = pipeline.resize({
+        width: MAX_IMAGE_WIDTH,
+        withoutEnlargement: true,
+      });
+    }
+
+    let buffer = file.buffer;
+    let extension = path.extname(file.originalname || "") || ".jpg";
+    let mimeType = file.mimetype || "image/jpeg";
+
+    if (format === "png") {
+      buffer = await pipeline.png({ compressionLevel: 9, palette: true }).toBuffer();
+      extension = ".png";
+      mimeType = "image/png";
+    } else if (format === "webp") {
+      buffer = await pipeline.webp({ quality: WEBP_QUALITY }).toBuffer();
+      extension = ".webp";
+      mimeType = "image/webp";
+    } else if (format === "jpeg" || format === "jpg") {
+      buffer = await pipeline.jpeg({ quality: JPEG_QUALITY, mozjpeg: true }).toBuffer();
+      extension = ".jpg";
+      mimeType = "image/jpeg";
+    } else if (format === "avif") {
+      buffer = await pipeline.webp({ quality: WEBP_QUALITY }).toBuffer();
+      extension = ".webp";
+      mimeType = "image/webp";
+    } else {
+      // Unknown raster format: resize if needed, then normalize to JPEG for browser friendliness.
+      buffer = await pipeline.jpeg({ quality: JPEG_QUALITY, mozjpeg: true }).toBuffer();
+      extension = ".jpg";
+      mimeType = "image/jpeg";
+    }
+
+    return {
+      ...file,
+      buffer,
+      size: buffer.length,
+      mimetype: mimeType,
+      originalname: `${path.parse(file.originalname || "image").name}${extension}`,
+    };
+  } catch (err) {
+    console.warn(`Optimisation ignoree pour ${file.originalname || "image"}: ${err.message}`);
+    return file;
+  }
+};
 
 const isLocalUploadPath = (imagePath) =>
   typeof imagePath === "string" && imagePath.startsWith("/uploads/");
@@ -126,11 +193,13 @@ const deleteCloudinaryImage = async (imagePath) => {
 export const storeUploadedImage = async (file) => {
   if (!file) return "";
 
+  const optimizedFile = await optimizeImage(file);
+
   if (isCloudinaryConfigured()) {
-    return uploadToCloudinary(file);
+    return uploadToCloudinary(optimizedFile);
   }
 
-  return saveLocally(file);
+  return saveLocally(optimizedFile);
 };
 
 export const deleteStoredImage = async (imagePath) => {
