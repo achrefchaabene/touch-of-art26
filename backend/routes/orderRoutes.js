@@ -20,7 +20,11 @@ const getQuantity = (item) => {
   return Math.max(0, Math.floor(value));
 };
 
-const getUnitPrice = (product) => Number(product?.salePrice ?? product?.price ?? 0);
+const getUnitPrice = (product) => {
+  const salePrice = Number(product?.salePrice);
+  const price = Number(product?.price ?? 0);
+  return Number.isFinite(salePrice) && salePrice > 0 && salePrice < price ? salePrice : price;
+};
 
 const buildQuantityMap = (items = []) => {
   const quantities = new Map();

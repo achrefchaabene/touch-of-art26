@@ -39,7 +39,11 @@ const statusLabels = {
 
 const buildItemsHtml = (items = []) =>
   items.map((item) => {
-    const price = item?.product?.salePrice ?? item?.product?.price ?? 0;
+    const salePrice = Number(item?.product?.salePrice);
+    const regularPrice = Number(item?.product?.price ?? 0);
+    const price = Number.isFinite(salePrice) && salePrice > 0 && salePrice < regularPrice
+      ? salePrice
+      : regularPrice;
     return `<tr>
       <td style="padding:6px 12px;border-bottom:1px solid #eee">${item?.product?.name ?? "Produit"}</td>
       <td style="padding:6px 12px;border-bottom:1px solid #eee;text-align:center">${item.quantity}</td>

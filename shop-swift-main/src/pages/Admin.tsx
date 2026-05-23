@@ -82,7 +82,9 @@ const Admin = () => {
       barcode: form.barcode.trim(),
       description: form.description,
       price: parseFloat(form.price),
-      salePrice: form.salePrice.trim() !== "" ? parseFloat(form.salePrice) : null,
+      salePrice: form.salePrice.trim() !== "" && parseFloat(form.salePrice) > 0
+        ? parseFloat(form.salePrice)
+        : null,
       purchasePrice: form.purchasePrice ? parseFloat(form.purchasePrice) : null,
       image: form.image || "",
       category: form.category,
@@ -360,7 +362,7 @@ const Admin = () => {
                     </TableCell>
 
                     <TableCell className="text-right">
-                      {product.salePrice != null && product.salePrice < product.price ? (
+                      {product.salePrice != null && product.salePrice > 0 && product.salePrice < product.price ? (
                         <span className="flex flex-col items-end gap-0.5">
                           <span className="text-xs text-muted-foreground line-through">{product.price.toFixed(2)} DT</span>
                           <span className="font-bold text-red-500">{product.salePrice.toFixed(2)} DT</span>

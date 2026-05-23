@@ -35,6 +35,21 @@ const normalizeProductPayload = (payload) => {
     data.barcode = barcode;
   }
 
+  if ("salePrice" in data) {
+    const rawSalePrice = typeof data.salePrice === "string"
+      ? data.salePrice.trim()
+      : data.salePrice;
+
+    if (rawSalePrice === "" || rawSalePrice == null) {
+      data.salePrice = null;
+    } else {
+      const parsedSalePrice = Number(rawSalePrice);
+      data.salePrice = Number.isFinite(parsedSalePrice) && parsedSalePrice > 0
+        ? parsedSalePrice
+        : null;
+    }
+  }
+
   return data;
 };
 

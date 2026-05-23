@@ -22,7 +22,7 @@ const ProductCard = ({ product, highlighted = false }: { product: Product; highl
               Selectionne
             </span>
           )}
-          {product.salePrice != null && product.salePrice < product.price && (
+          {product.salePrice != null && product.salePrice > 0 && product.salePrice < product.price && (
             <span className="absolute top-2 left-2 z-10 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white shadow">
               Promo
             </span>
@@ -62,7 +62,7 @@ const ProductCard = ({ product, highlighted = false }: { product: Product; highl
         </Link>
         <div className="mt-3 flex items-center justify-between">
           <div className="flex flex-col">
-            {product.salePrice != null && product.salePrice < product.price ? (
+            {product.salePrice != null && product.salePrice > 0 && product.salePrice < product.price ? (
               <>
                 <span className="text-xs line-through text-muted-foreground">{product.price.toFixed(2)} DT</span>
                 <span className="text-lg font-bold text-red-500">{product.salePrice.toFixed(2)} DT</span>

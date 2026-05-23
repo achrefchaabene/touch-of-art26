@@ -50,7 +50,7 @@ router.get("/", async (req, res) => {
         // Effective selling price (snapshot value)
         const snapSale  = item?.product?.salePrice;
         const snapPrice = item?.product?.price || 0;
-        const sellingPrice = (snapSale && snapSale < snapPrice) ? snapSale : snapPrice;
+        const sellingPrice = (snapSale != null && snapSale > 0 && snapSale < snapPrice) ? snapSale : snapPrice;
 
         // Purchase price from current product catalogue
         const pp = productMap[pid]?.purchasePrice ?? null;
@@ -115,7 +115,7 @@ router.get("/", async (req, res) => {
           const pid = String(item?.product?._id || item?.product?.id || "");
           const snapSale  = item?.product?.salePrice;
           const snapPrice = item?.product?.price || 0;
-          const sellingPrice = (snapSale && snapSale < snapPrice) ? snapSale : snapPrice;
+          const sellingPrice = (snapSale != null && snapSale > 0 && snapSale < snapPrice) ? snapSale : snapPrice;
           const pp = productMap[pid]?.purchasePrice ?? null;
           if (pp !== null) orderProfit += (sellingPrice - pp) * (item.quantity || 0);
         });
