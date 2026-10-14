@@ -26,7 +26,7 @@ import { ShippingInfo } from "@/types";
 import { resolveProductImage } from "@/lib/product-image";
 
 const FREE_SHIPPING_THRESHOLD = 100;
-const SHIPPING_FEE = 7;
+const SHIPPING_FEE = 8;
 
 const Cart = () => {
   const { items, removeItem, updateQuantity, clearCart, totalPrice } =

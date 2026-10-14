@@ -1,7 +1,7 @@
-import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { v2 as cloudinary } from "cloudinary";
 import sharp from "sharp";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -13,6 +13,12 @@ const JPEG_QUALITY = Number(process.env.PRODUCT_IMAGE_JPEG_QUALITY || 82);
 const WEBP_QUALITY = Number(process.env.PRODUCT_IMAGE_WEBP_QUALITY || 82);
 
 await fs.promises.mkdir(uploadsDir, { recursive: true });
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 const isCloudinaryConfigured = () =>
   Boolean(
@@ -115,31 +121,32 @@ const deleteLocalImage = async (imagePath) => {
 };
 
 const uploadToCloudinary = async (file) => {
-  const timestamp = Math.floor(Date.now() / 1000);
-  const signaturePayload = `folder=${cloudinaryFolder}&timestamp=${timestamp}${process.env.CLOUDINARY_API_SECRET}`;
-  const signature = crypto.createHash("sha1").update(signaturePayload).digest("hex");
+  const uploadResult = await new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: cloudinaryFolder,
+        resource_type: "image",
+        use_filename: true,
+        unique_filename: true,
+      },
+      (err, result) => {
+        if (err) {
+          reject(err);
+          return;
+        }
 
-  const formData = new FormData();
-  formData.append("file", new Blob([file.buffer], { type: file.mimetype }), file.originalname || "image");
-  formData.append("api_key", process.env.CLOUDINARY_API_KEY);
-  formData.append("timestamp", String(timestamp));
-  formData.append("folder", cloudinaryFolder);
-  formData.append("signature", signature);
+        resolve(result);
+      },
+    );
 
-  const response = await fetch(
-    `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload`,
-    {
-      method: "POST",
-      body: formData,
-    },
-  );
+    stream.end(file.buffer);
+  });
 
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok || !payload?.secure_url) {
-    throw new Error(payload?.error?.message || "Upload Cloudinary impossible.");
+  if (!uploadResult?.secure_url) {
+    throw new Error("Upload Cloudinary impossible.");
   }
 
-  return payload.secure_url;
+  return uploadResult.secure_url;
 };
 
 const getCloudinaryPublicId = (imagePath) => {
@@ -166,27 +173,10 @@ const deleteCloudinaryImage = async (imagePath) => {
   const publicId = getCloudinaryPublicId(imagePath);
   if (!publicId || !isCloudinaryConfigured()) return;
 
-  const timestamp = Math.floor(Date.now() / 1000);
-  const signaturePayload = `public_id=${publicId}&timestamp=${timestamp}${process.env.CLOUDINARY_API_SECRET}`;
-  const signature = crypto.createHash("sha1").update(signaturePayload).digest("hex");
-
-  const formData = new FormData();
-  formData.append("public_id", publicId);
-  formData.append("api_key", process.env.CLOUDINARY_API_KEY);
-  formData.append("timestamp", String(timestamp));
-  formData.append("signature", signature);
-
-  const response = await fetch(
-    `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_CLOUD_NAME}/image/destroy`,
-    {
-      method: "POST",
-      body: formData,
-    },
-  );
-
-  if (!response.ok) {
-    const payload = await response.json().catch(() => ({}));
-    console.warn(`Suppression Cloudinary ignoree: ${payload?.error?.message || response.statusText}`);
+  try {
+    await cloudinary.uploader.destroy(publicId, { resource_type: "image" });
+  } catch (err) {
+    console.warn(`Suppression Cloudinary ignoree: ${err?.message || "erreur inconnue"}`);
   }
 };
 

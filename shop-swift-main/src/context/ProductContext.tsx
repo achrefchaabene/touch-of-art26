@@ -12,11 +12,13 @@ interface ProductContextType {
   addProduct: (product: Omit<Product, "id">, imageFile?: File | null) => Promise<void>;
   updateProduct: (id: string, product: Partial<Product>, imageFile?: File | null) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
+  deleteAllProducts: () => Promise<void>;
   refreshProducts: () => Promise<void>;
   categories: string[];
   addCategory: (name: string) => Promise<void>;
   updateCategory: (oldName: string, newName: string) => Promise<void>;
   deleteCategory: (name: string) => Promise<void>;
+  deleteAllCategories: () => Promise<void>;
 }
 
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
@@ -132,6 +134,18 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const deleteAllProducts = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/products`, { method: "DELETE" });
+      if (!res.ok) throw new Error(await getErrorMessage(res, "Impossible de supprimer les produits."));
+      setProducts([]);
+      toast({ title: "Produits supprimes", description: "Tous les produits ont ete supprimes.", variant: "destructive" });
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+      throw err;
+    }
+  };
+
   const addCategory = async (name: string) => {
     try {
       const res = await fetch(`${API_URL}/api/categories`, {
@@ -184,6 +198,18 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const deleteAllCategories = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/categories`, { method: "DELETE" });
+      if (!res.ok) throw new Error(await getErrorMessage(res, "Impossible de supprimer les categories."));
+      setCategories(["Tous"]);
+      toast({ title: "Categories supprimees", description: "Toutes les categories ont ete supprimees.", variant: "destructive" });
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+      throw err;
+    }
+  };
+
   return (
     <ProductContext.Provider
       value={{
@@ -192,11 +218,13 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
         addProduct,
         updateProduct,
         deleteProduct,
+        deleteAllProducts,
         refreshProducts,
         categories,
         addCategory,
         updateCategory,
         deleteCategory,
+        deleteAllCategories,
       }}
     >
       {children}

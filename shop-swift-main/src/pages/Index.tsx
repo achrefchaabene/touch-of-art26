@@ -23,6 +23,11 @@ const SkeletonCard = () => (
   </div>
 );
 
+const getProductBarcodes = (product: { barcode?: string; barcodes?: string[] }) =>
+  (product.barcodes?.length ? product.barcodes : [product.barcode ?? ""])
+    .filter(Boolean)
+    .map((barcode) => barcode.toLowerCase());
+
 const Index = () => {
   const { products, categories, loading } = useProducts();
   const [search, setSearch] = useState("");
@@ -41,7 +46,7 @@ const Index = () => {
   const exactBarcodeMatch = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return null;
-    return products.find((product) => (product.barcode ?? "").toLowerCase() === term) ?? null;
+    return products.find((product) => getProductBarcodes(product).includes(term)) ?? null;
   }, [products, search]);
 
   const filtered = useMemo(() => {
@@ -52,11 +57,11 @@ const Index = () => {
     }
 
     let list = products.filter((product) => {
-      const matchSearch =
+        const matchSearch =
         term.length === 0 ||
         product.name.toLowerCase().includes(term) ||
         product.description.toLowerCase().includes(term) ||
-        (product.barcode ?? "").toLowerCase().includes(term);
+        getProductBarcodes(product).some((barcode) => barcode.includes(term));
 
       const matchCategory = activeCategory === "Tous" || product.category === activeCategory;
       return matchSearch && matchCategory;

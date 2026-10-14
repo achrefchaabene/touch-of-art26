@@ -55,6 +55,23 @@ router.put("/:name", async (req, res) => {
   }
 });
 
+// DELETE — supprimer toutes les catégories, uniquement après avoir vidé les produits.
+router.delete("/", async (_req, res) => {
+  try {
+    const productCount = await Product.countDocuments();
+    if (productCount > 0) {
+      return res.status(400).json({
+        message: "Supprimez d'abord tous les produits avant de supprimer toutes les categories.",
+      });
+    }
+
+    const result = await Category.deleteMany({});
+    res.json({ message: "Toutes les categories ont ete supprimees.", count: result.deletedCount });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // DELETE — supprimer une catégorie (refusée si des produits l'utilisent)
 router.delete("/:name", async (req, res) => {
   try {

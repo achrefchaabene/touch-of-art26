@@ -4,6 +4,35 @@ const PLACEHOLDER_IMAGE = "/placeholder.svg";
 
 export const getPlaceholderImage = () => PLACEHOLDER_IMAGE;
 
+const encodeUrl = (value: string) => {
+  try {
+    return encodeURI(value);
+  } catch {
+    return value;
+  }
+};
+
+const normalizeAbsoluteUrl = (value: string) => {
+  try {
+    const url = new URL(value);
+
+    // Some mobile browsers/webviews block insecure image URLs on an HTTPS page.
+    if (
+      typeof window !== "undefined" &&
+      window.location.protocol === "https:" &&
+      url.protocol === "http:" &&
+      url.hostname !== "localhost" &&
+      url.hostname !== "127.0.0.1"
+    ) {
+      url.protocol = "https:";
+    }
+
+    return url.toString();
+  } catch {
+    return encodeUrl(value);
+  }
+};
+
 export const resolveProductImage = (image?: string | null) => {
   if (!image) return PLACEHOLDER_IMAGE;
 
@@ -15,20 +44,22 @@ export const resolveProductImage = (image?: string | null) => {
     normalized.startsWith("https://") ||
     normalized.startsWith("data:")
   ) {
-    return normalized;
+    return normalizeAbsoluteUrl(normalized);
   }
 
   if (normalized.startsWith("//")) {
-    return `${window.location.protocol}${normalized}`;
+    return normalizeAbsoluteUrl(`${window.location.protocol}${normalized}`);
   }
 
   if (normalized.startsWith("/uploads/")) {
-    return API_URL ? `${API_URL}${normalized}` : normalized;
+    return API_URL ? normalizeAbsoluteUrl(`${API_URL}${normalized}`) : encodeUrl(normalized);
   }
 
   if (normalized.startsWith("uploads/")) {
-    return API_URL ? `${API_URL}/${normalized}` : `/${normalized}`;
+    return API_URL
+      ? normalizeAbsoluteUrl(`${API_URL}/${normalized}`)
+      : encodeUrl(`/${normalized}`);
   }
 
-  return normalized;
+  return encodeUrl(normalized);
 };

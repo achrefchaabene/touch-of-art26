@@ -19,11 +19,11 @@ export default defineConfig({
     strictPort: false,
     proxy: {
       "/api": {
-        target: "http://localhost:9000",
+        target: "http://localhost:9001",
         changeOrigin: true,
       },
       "/uploads": {
-        target: "http://localhost:9000",
+        target: "http://localhost:9001",
         changeOrigin: true,
       },
     },

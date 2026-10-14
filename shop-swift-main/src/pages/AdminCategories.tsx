@@ -11,13 +11,24 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Plus, Pencil, Trash2, Tags } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const AdminCategories = () => {
   const { user, isAuthenticated } = useAuth();
-  const { categories, products, addCategory, updateCategory, deleteCategory } = useProducts();
+  const { categories, products, addCategory, updateCategory, deleteCategory, deleteAllCategories } = useProducts();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingName, setEditingName] = useState<string | null>(null);
   const [formName, setFormName] = useState("");
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
 
   if (!isAuthenticated || user?.role !== "admin") {
     return <Navigate to="/login" />;
@@ -54,20 +65,50 @@ const AdminCategories = () => {
 
   const countProducts = (cat: string) => products.filter((p) => p.category === cat).length;
 
+  const handleDeleteAll = async () => {
+    await deleteAllCategories();
+    setDeleteAllOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="container mx-auto px-4 py-8">
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <Tags className="h-7 w-7 text-primary" />
             <h1 className="font-display text-3xl font-bold">Catégories</h1>
           </div>
-          <Button onClick={openNew}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nouvelle catégorie
-          </Button>
+          <div className="flex gap-2">
+            {editableCategories.length > 0 && (
+              <Button variant="destructive" onClick={() => setDeleteAllOpen(true)}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Tout supprimer
+              </Button>
+            )}
+            <Button onClick={openNew}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nouvelle catégorie
+            </Button>
+          </div>
         </div>
+
+        <AlertDialog open={deleteAllOpen} onOpenChange={setDeleteAllOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Supprimer toutes les catégories ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Cette action est definitive. Supprime d'abord tous les produits : une categorie utilisee par un produit ne peut pas etre supprimee.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={handleDeleteAll}>
+                Tout supprimer
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent className="sm:max-w-md">

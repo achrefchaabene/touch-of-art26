@@ -17,6 +17,24 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { resolveProductImage } from "@/lib/product-image";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+const parseBarcodes = (value: string) =>
+  [...new Set(
+    value
+      .split(/[\n,;]+/)
+      .map((barcode) => barcode.trim())
+      .filter(Boolean),
+  )];
 
 const emptyForm = {
   name: "",
@@ -33,13 +51,14 @@ const emptyForm = {
 
 const Admin = () => {
   const { user, isAuthenticated } = useAuth();
-  const { products, addProduct, updateProduct, deleteProduct, categories } = useProducts();
+  const { products, addProduct, updateProduct, deleteProduct, deleteAllProducts, categories } = useProducts();
   const [form, setForm] = useState(emptyForm);
   const [searchTerm, setSearchTerm] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isAuthenticated || user?.role !== "admin") {
@@ -51,10 +70,15 @@ const Admin = () => {
   const filteredProducts = products.filter((product) => {
     if (!normalizedSearch) return true;
 
+    const barcodeText = [product.barcode, ...(product.barcodes ?? [])]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
     return (
       product.name.toLowerCase().includes(normalizedSearch) ||
       product.category.toLowerCase().includes(normalizedSearch) ||
-      (product.barcode ?? "").toLowerCase().includes(normalizedSearch)
+      barcodeText.includes(normalizedSearch)
     );
   });
 
@@ -68,10 +92,12 @@ const Admin = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!form.name || !form.barcode.trim() || !form.price || !form.stock) {
+    const barcodes = parseBarcodes(form.barcode);
+
+    if (!form.name || barcodes.length === 0 || !form.price || !form.stock) {
       toast({
         title: "Erreur",
-        description: "Veuillez remplir tous les champs obligatoires, y compris le code-barres.",
+        description: "Veuillez remplir tous les champs obligatoires, y compris au moins un code-barres.",
         variant: "destructive",
       });
       return;
@@ -79,7 +105,8 @@ const Admin = () => {
 
     const productData = {
       name: form.name,
-      barcode: form.barcode.trim(),
+      barcode: barcodes[0],
+      barcodes,
       description: form.description,
       price: parseFloat(form.price),
       salePrice: form.salePrice.trim() !== "" && parseFloat(form.salePrice) > 0
@@ -108,7 +135,7 @@ const Admin = () => {
   const startEdit = (product: Product) => {
     setForm({
       name: product.name,
-      barcode: product.barcode ?? "",
+      barcode: (product.barcodes?.length ? product.barcodes : [product.barcode ?? ""]).filter(Boolean).join("\n"),
       description: product.description,
       price: product.price.toString(),
       salePrice: product.salePrice != null ? product.salePrice.toString() : "",
@@ -130,6 +157,11 @@ const Admin = () => {
     setImagePreview("");
     setEditingId(null);
     setDialogOpen(true);
+  };
+
+  const handleDeleteAll = async () => {
+    await deleteAllProducts();
+    setDeleteAllOpen(false);
   };
 
   return (
@@ -167,14 +199,16 @@ const Admin = () => {
                 </div>
 
                 <div>
-                  <Label htmlFor="barcode">Code-barres *</Label>
-                  <Input
+                  <Label htmlFor="barcode">Codes-barres *</Label>
+                  <Textarea
                     id="barcode"
                     value={form.barcode}
                     onChange={(event) => setForm({ ...form, barcode: event.target.value })}
-                    placeholder="Ex : 6191234567890"
+                    placeholder={"Un code par ligne\nEx : 6191234567890"}
                     required
+                    rows={3}
                   />
+                  <p className="mt-1 text-xs text-muted-foreground">Vous pouvez saisir plusieurs codes-barres, un par ligne.</p>
                 </div>
 
                 <div>
@@ -315,16 +349,41 @@ const Admin = () => {
           </Dialog>
         </div>
 
+        <AlertDialog open={deleteAllOpen} onOpenChange={setDeleteAllOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Supprimer tous les produits ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Cette action est definitive : elle supprimera les {products.length} produit(s) et leurs images stockees.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={handleDeleteAll}>
+                Tout supprimer
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         <Card>
           <CardHeader>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <CardTitle className="text-lg">Produits ({filteredProducts.length})</CardTitle>
-              <div className="w-full sm:w-80">
-                <Input
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                  placeholder="Rechercher par nom ou code-barres"
-                />
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                {products.length > 0 && (
+                  <Button variant="destructive" onClick={() => setDeleteAllOpen(true)}>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Tout supprimer
+                  </Button>
+                )}
+                <div className="w-full sm:w-80">
+                  <Input
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                    placeholder="Rechercher par nom ou code-barres"
+                  />
+                </div>
               </div>
             </div>
           </CardHeader>
@@ -356,7 +415,9 @@ const Admin = () => {
                       </div>
                     </TableCell>
 
-                    <TableCell className="font-mono text-xs">{product.barcode || "-"}</TableCell>
+                    <TableCell className="font-mono text-xs">
+                      {((product.barcodes?.length ? product.barcodes : [product.barcode ?? ""]).filter(Boolean)).join(", ") || "-"}
+                    </TableCell>
                     <TableCell>
                       <Badge variant="secondary">{product.category}</Badge>
                     </TableCell>

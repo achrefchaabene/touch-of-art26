@@ -100,6 +100,14 @@ const getCustomerName = (order: AdminOrder) =>
   order.userName ||
   "Client";
 
+const hasShippingDetails = (order: AdminOrder) =>
+  Boolean(
+    order.shipping?.firstName?.trim() ||
+      order.shipping?.lastName?.trim() ||
+      order.shipping?.phone?.trim() ||
+      order.shipping?.address?.trim(),
+  );
+
 const getUnitPrice = (item: { product?: Partial<Product>; quantity?: number }) =>
   Number(item.product?.salePrice ?? item.product?.price ?? 0);
 
@@ -339,8 +347,14 @@ const buildPrintableOrderHtml = (order: AdminOrder) => {
               <h2>Client</h2>
               <p><strong>${escapeHtml(getCustomerName(order))}</strong></p>
               <p>${escapeHtml(order.userEmail ?? "-")}</p>
-              <p>${escapeHtml(order.shipping?.phone ?? "-")}</p>
-              <p>${escapeHtml(order.shipping?.address ?? "-")}</p>
+              ${
+                hasShippingDetails(order)
+                  ? `
+                    <p>${escapeHtml(order.shipping?.phone ?? "-")}</p>
+                    <p>${escapeHtml(order.shipping?.address ?? "-")}</p>
+                  `
+                  : `<p>Aucune information de livraison</p>`
+              }
             </div>
           </div>
 
@@ -776,8 +790,14 @@ const AdminOrders = () => {
                         <h4 className="text-xs font-semibold uppercase text-muted-foreground">Client</h4>
                         <p className="text-sm font-medium">{getCustomerName(order)}</p>
                         <p className="text-sm text-muted-foreground">{order.userEmail ?? "-"}</p>
-                        <p className="text-sm text-muted-foreground">Tel: {order.shipping?.phone ?? "-"}</p>
-                        <p className="text-sm text-muted-foreground">Adresse: {order.shipping?.address ?? "-"}</p>
+                        {hasShippingDetails(order) ? (
+                          <>
+                            <p className="text-sm text-muted-foreground">Tel: {order.shipping?.phone ?? "-"}</p>
+                            <p className="text-sm text-muted-foreground">Adresse: {order.shipping?.address ?? "-"}</p>
+                          </>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">Livraison optionnelle non renseignee</p>
+                        )}
                       </div>
 
                       <div className="space-y-1 rounded-lg border p-3">
@@ -883,7 +903,7 @@ const AdminOrders = () => {
           <DialogHeader>
             <DialogTitle>Modifier la commande</DialogTitle>
             <DialogDescription>
-              Vous pouvez ajouter des articles, changer les quantites ou supprimer des lignes.
+              Vous pouvez ajouter des articles, changer les quantites ou supprimer des lignes. Les informations de livraison sont optionnelles.
             </DialogDescription>
           </DialogHeader>
 
@@ -891,7 +911,7 @@ const AdminOrders = () => {
             <div className="grid gap-5 py-2">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Prenom</label>
+                  <label className="text-sm font-medium">Prenom <span className="text-xs text-muted-foreground">- optionnel</span></label>
                   <Input
                     value={editForm.firstName}
                     onChange={(event) => handleEditFieldChange("firstName", event.target.value)}
@@ -899,7 +919,7 @@ const AdminOrders = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Nom</label>
+                  <label className="text-sm font-medium">Nom <span className="text-xs text-muted-foreground">- optionnel</span></label>
                   <Input
                     value={editForm.lastName}
                     onChange={(event) => handleEditFieldChange("lastName", event.target.value)}
@@ -909,7 +929,7 @@ const AdminOrders = () => {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Email</label>
+                  <label className="text-sm font-medium">Email <span className="text-xs text-muted-foreground">- optionnel</span></label>
                   <Input
                     type="email"
                     value={editForm.userEmail}
@@ -918,7 +938,7 @@ const AdminOrders = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Telephone</label>
+                  <label className="text-sm font-medium">Telephone <span className="text-xs text-muted-foreground">- optionnel</span></label>
                   <Input
                     value={editForm.phone}
                     onChange={(event) => handleEditFieldChange("phone", event.target.value)}
@@ -927,7 +947,7 @@ const AdminOrders = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Adresse</label>
+                <label className="text-sm font-medium">Adresse de livraison <span className="text-xs text-muted-foreground">- optionnelle</span></label>
                 <Textarea
                   value={editForm.address}
                   onChange={(event) => handleEditFieldChange("address", event.target.value)}

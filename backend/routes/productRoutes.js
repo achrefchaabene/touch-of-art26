@@ -27,13 +27,26 @@ const upload = multer({
   },
 });
 
+const parseBarcodes = (...values) => {
+  const rawValues = values.flatMap((value) => {
+    if (Array.isArray(value)) return value;
+    if (typeof value === "string") return [value];
+    return [];
+  });
+
+  return [...new Set(
+    rawValues
+      .flatMap((value) => value.split(/[\n,;]+/))
+      .map((value) => value.trim())
+      .filter(Boolean),
+  )];
+};
+
 const normalizeProductPayload = (payload) => {
   const data = { ...payload };
-
-  if (typeof data.barcode === "string") {
-    const barcode = data.barcode.trim();
-    data.barcode = barcode;
-  }
+  const barcodes = parseBarcodes(data.barcodes, data.barcode);
+  data.barcode = barcodes[0] || "";
+  data.barcodes = barcodes;
 
   if ("salePrice" in data) {
     const rawSalePrice = typeof data.salePrice === "string"
@@ -51,6 +64,25 @@ const normalizeProductPayload = (payload) => {
   }
 
   return data;
+};
+
+const findBarcodeConflict = async (barcodes, excludedProductId) => {
+  if (!Array.isArray(barcodes) || barcodes.length === 0) {
+    return null;
+  }
+
+  const query = {
+    $or: [
+      { barcode: { $in: barcodes } },
+      { barcodes: { $in: barcodes } },
+    ],
+  };
+
+  if (excludedProductId) {
+    query._id = { $ne: excludedProductId };
+  }
+
+  return Product.findOne(query).lean();
 };
 
 const handleProductError = (res, err) => {
@@ -71,7 +103,13 @@ router.get("/", async (req, res) => {
     const filters = [];
 
     if (typeof barcode === "string" && barcode.trim()) {
-      filters.push({ barcode: barcode.trim() });
+      const normalizedBarcode = barcode.trim();
+      filters.push({
+        $or: [
+          { barcode: normalizedBarcode },
+          { barcodes: normalizedBarcode },
+        ],
+      });
     }
 
     if (typeof q === "string" && q.trim()) {
@@ -80,6 +118,7 @@ router.get("/", async (req, res) => {
         $or: [
           { name: pattern },
           { barcode: pattern },
+          { barcodes: pattern },
           { category: pattern },
         ],
       });
@@ -111,6 +150,10 @@ router.post("/", singleImageUpload, async (req, res) => {
     if (!data.barcode) {
       return res.status(400).json({ message: "Le code-barres est obligatoire." });
     }
+    const conflict = await findBarcodeConflict(data.barcodes);
+    if (conflict) {
+      return res.status(400).json({ message: "Un ou plusieurs codes-barres existent deja." });
+    }
     if (req.file) {
       data.image = await storeUploadedImage(req.file);
     }
@@ -136,6 +179,11 @@ router.put("/:id", singleImageUpload, async (req, res) => {
       return res.status(404).json({ message: "Produit introuvable." });
     }
 
+    const conflict = await findBarcodeConflict(data.barcodes, req.params.id);
+    if (conflict) {
+      return res.status(400).json({ message: "Un ou plusieurs codes-barres existent deja." });
+    }
+
     if (req.file) {
       data.image = await storeUploadedImage(req.file);
     }
@@ -151,6 +199,20 @@ router.put("/:id", singleImageUpload, async (req, res) => {
     }
 
     res.json(product);
+  } catch (err) {
+    handleProductError(res, err);
+  }
+});
+
+router.delete("/", async (_req, res) => {
+  try {
+    const products = await Product.find({}, { image: 1 }).lean();
+    await Product.deleteMany({});
+
+    // Do not leave uploaded Cloudinary assets behind when the catalogue is reset.
+    await Promise.allSettled(products.map((product) => deleteStoredImage(product.image)));
+
+    res.json({ message: "Tous les produits ont ete supprimes.", count: products.length });
   } catch (err) {
     handleProductError(res, err);
   }
