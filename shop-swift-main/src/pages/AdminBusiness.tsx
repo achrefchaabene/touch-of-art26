@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Building2, FileText, PackagePlus, Truck } from "lucide-react";
+import { Building2, CheckCircle2, FileText, PackagePlus, Plus, Trash2, Truck } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/context/AuthContext";
 import { useProducts } from "@/context/ProductContext";
@@ -23,7 +23,8 @@ const AdminBusiness = () => {
   const [documents, setDocuments] = useState<any[]>([]);
   const [supplier, setSupplier] = useState({ name: "", contact: "", phone: "", email: "" });
   const [purchase, setPurchase] = useState({ supplier: "", productId: "", quantity: "1", unitCost: "", reference: "" });
-  const [document, setDocument] = useState({ type: "quote", customerName: "", productId: "", quantity: "1" });
+  const [document, setDocument] = useState({ type: "quote", customerName: "" });
+  const [documentItems, setDocumentItems] = useState([{ productId: "", quantity: "1" }]);
   const [profileFile, setProfileFile] = useState<File | null>(null);
 
   const load = async () => {
@@ -58,9 +59,14 @@ const AdminBusiness = () => {
     try { await request("/api/purchases", "POST", { ...purchase, items: [{ productId: product.id, quantity: Number(purchase.quantity), unitCost: Number(purchase.unitCost) }] }); setPurchase({ supplier: "", productId: "", quantity: "1", unitCost: "", reference: "" }); await refreshProducts(); await load(); toast({ title: "Achat enregistre", description: "Le stock a ete mis a jour." }); } catch (e: any) { toast({ title: "Erreur", description: e.message, variant: "destructive" }); }
   };
   const createDocument = async () => {
-    const product = products.find((entry) => entry.id === document.productId); if (!product) return;
-    try { await request("/api/documents", "POST", { ...document, vatRate: profile.vatRate, items: [{ productId: product.id, name: product.name, quantity: Number(document.quantity), unitPrice: product.salePrice || product.price }] }); setDocument({ type: "quote", customerName: "", productId: "", quantity: "1" }); await load(); toast({ title: "Document cree" }); } catch (e: any) { toast({ title: "Erreur", description: e.message, variant: "destructive" }); }
+    const items = documentItems.map((item) => {
+      const product = products.find((entry) => entry.id === item.productId);
+      return product ? { productId: product.id, name: product.name, quantity: Number(item.quantity), unitPrice: product.salePrice || product.price } : null;
+    }).filter(Boolean);
+    if (items.length !== documentItems.length) return toast({ title: "Erreur", description: "Choisis un produit pour chaque ligne.", variant: "destructive" });
+    try { await request("/api/documents", "POST", { ...document, vatRate: profile.vatRate, items }); setDocument({ type: "quote", customerName: "" }); setDocumentItems([{ productId: "", quantity: "1" }]); await load(); toast({ title: "Document cree" }); } catch (e: any) { toast({ title: "Erreur", description: e.message, variant: "destructive" }); }
   };
+  const validateInvoice = async (id: string) => { try { await request(`/api/documents/${id}/validate`, "PATCH"); await refreshProducts(); await load(); toast({ title: "Facture validee", description: "Le stock a ete diminue." }); } catch (e: any) { toast({ title: "Erreur", description: e.message, variant: "destructive" }); } };
   const productOptions = products.map((product) => <SelectItem key={product.id} value={product.id}>{product.name} ({product.stock})</SelectItem>);
 
   return <div className="min-h-screen bg-background"><Navbar /><main className="container mx-auto space-y-6 px-4 py-8">
@@ -85,9 +91,9 @@ const AdminBusiness = () => {
       <Card><CardHeader><CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" />Devis et factures</CardTitle></CardHeader><CardContent className="space-y-3">
         <Select value={document.type} onValueChange={(type) => setDocument({ ...document, type })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="quote">Devis</SelectItem><SelectItem value="invoice">Facture</SelectItem></SelectContent></Select>
         <Input placeholder="Nom du client" value={document.customerName} onChange={(e) => setDocument({ ...document, customerName: e.target.value })} />
-        <Select value={document.productId} onValueChange={(productId) => setDocument({ ...document, productId })}><SelectTrigger><SelectValue placeholder="Produit" /></SelectTrigger><SelectContent>{productOptions}</SelectContent></Select>
-        <div className="flex gap-2"><Input className="max-w-36" type="number" min="1" value={document.quantity} onChange={(e) => setDocument({ ...document, quantity: e.target.value })} /><Button onClick={createDocument} disabled={!document.customerName || !document.productId}>Créer</Button></div>
-        <div className="max-h-28 space-y-1 overflow-auto text-sm">{documents.map((item) => <div key={item.id} className="rounded border p-2">{item.number} — {item.customerName} — {Number(item.total).toFixed(2)} {profile.currency}</div>)}</div>
+        <div className="space-y-2">{documentItems.map((item, index) => <div key={index} className="flex gap-2"><Select value={item.productId} onValueChange={(productId) => setDocumentItems((prev) => prev.map((entry, entryIndex) => entryIndex === index ? { ...entry, productId } : entry))}><SelectTrigger className="flex-1"><SelectValue placeholder="Produit" /></SelectTrigger><SelectContent>{productOptions}</SelectContent></Select><Input className="w-20" type="number" min="1" value={item.quantity} onChange={(e) => setDocumentItems((prev) => prev.map((entry, entryIndex) => entryIndex === index ? { ...entry, quantity: e.target.value } : entry))} />{documentItems.length > 1 && <Button variant="ghost" size="icon" onClick={() => setDocumentItems((prev) => prev.filter((_, entryIndex) => entryIndex !== index))}><Trash2 className="h-4 w-4 text-destructive" /></Button>}</div>)}</div>
+        <div className="flex flex-wrap gap-2"><Button variant="outline" size="sm" onClick={() => setDocumentItems((prev) => [...prev, { productId: "", quantity: "1" }])}><Plus className="mr-1 h-4 w-4" />Ajouter ligne</Button><Button onClick={createDocument} disabled={!document.customerName || documentItems.some((item) => !item.productId)}>Créer</Button></div>
+        <div className="max-h-36 space-y-1 overflow-auto text-sm">{documents.map((item) => <div key={item.id} className="flex items-center justify-between gap-2 rounded border p-2"><span>{item.number} — {item.customerName} — {Number(item.total).toFixed(2)} {profile.currency}</span>{item.type === "invoice" && item.status !== "validated" && <Button size="sm" variant="outline" onClick={() => validateInvoice(item.id)}><CheckCircle2 className="mr-1 h-4 w-4" />Valider</Button>}{item.status === "validated" && <span className="text-xs font-medium text-green-600">Validée</span>}</div>)}</div>
       </CardContent></Card>
     </div>
     <Card><CardHeader><CardTitle>Historique des achats</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">{purchases.length ? purchases.map((item) => <div key={item.id} className="rounded border p-3">{new Date(item.date).toLocaleDateString("fr-FR")} — {item.supplier || "Sans fournisseur"} — {Number(item.total).toFixed(2)} {profile.currency}</div>) : <p className="text-muted-foreground">Aucun achat enregistré.</p>}</CardContent></Card>

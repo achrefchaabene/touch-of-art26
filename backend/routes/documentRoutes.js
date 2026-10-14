@@ -1,5 +1,6 @@
 import express from "express";
 import SalesDocument from "../models/SalesDocument.js";
+import Product from "../models/Product.js";
 
 const router = express.Router();
 
@@ -28,6 +29,34 @@ router.post("/", async (req, res) => {
       ...req.body, type, number, customerName, items: cleanItems, subtotal, vatRate, vatAmount, total: subtotal + vatAmount,
     });
     res.status(201).json(document);
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+// A quote never affects inventory. An invoice affects inventory only when explicitly validated.
+router.patch("/:id/validate", async (req, res) => {
+  try {
+    const document = await SalesDocument.findById(req.params.id);
+    if (!document) return res.status(404).json({ message: "Document introuvable." });
+    if (document.type !== "invoice") return res.status(400).json({ message: "Seules les factures peuvent etre validees." });
+    if (document.status === "validated") return res.status(400).json({ message: "Cette facture est deja validee." });
+
+    const products = [];
+    for (const item of document.items) {
+      const product = await Product.findById(item.productId);
+      if (!product) return res.status(400).json({ message: `Produit introuvable : ${item.name}` });
+      if (product.stock < item.quantity) {
+        return res.status(400).json({ message: `Stock insuffisant pour ${product.name} (${product.stock} disponible).` });
+      }
+      products.push({ product, quantity: item.quantity });
+    }
+
+    for (const { product, quantity } of products) {
+      product.stock -= quantity;
+      await product.save();
+    }
+    document.status = "validated";
+    await document.save();
+    res.json(document);
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
