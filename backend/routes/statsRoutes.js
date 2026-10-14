@@ -2,13 +2,17 @@
 import express from "express";
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
+import Purchase from "../models/Purchase.js";
+import SalesDocument from "../models/SalesDocument.js";
 
 const router = express.Router();
 
 // GET /api/stats  — Aggregate business statistics
 router.get("/", async (req, res) => {
   try {
-    const [orders, products] = await Promise.all([Order.find(), Product.find()]);
+    const [orders, products, purchases, documents] = await Promise.all([
+      Order.find(), Product.find(), Purchase.find().sort({ date: -1 }).limit(5), SalesDocument.find(),
+    ]);
 
     // Build a map of productId -> purchasePrice for profit calculation
     const productMap = {};
@@ -23,6 +27,16 @@ router.get("/", async (req, res) => {
     const totalOrders = orders.length;
     const completedOrders = orders.filter((o) => ["accepted", "shipped", "delivered"].includes(o.status));
     const totalRevenue = completedOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+    const totalStock = products.reduce((sum, product) => sum + (product.stock || 0), 0);
+    const stockValue = products.reduce((sum, product) => sum + (product.stock || 0) * (product.purchasePrice ?? 0), 0);
+    const lowStockProducts = products
+      .filter((product) => (product.stock || 0) <= 5)
+      .sort((a, b) => (a.stock || 0) - (b.stock || 0))
+      .slice(0, 10)
+      .map((product) => ({ id: product.id, name: product.name, stock: product.stock, category: product.category }));
+    const purchaseTotal = purchases.reduce((sum, purchase) => sum + (purchase.total || 0), 0);
+    const invoices = documents.filter((document) => document.type === "invoice");
+    const quotes = documents.filter((document) => document.type === "quote");
 
     // ── Profit calculation ────────────────────────────────────────────────────
     // For each item in completed orders:
@@ -130,6 +144,13 @@ router.get("/", async (req, res) => {
       byStatus,
       topProducts,
       revenueByMonth,
+      totalStock,
+      stockValue: Math.round(stockValue * 100) / 100,
+      lowStockProducts,
+      recentPurchases: purchases.map((purchase) => ({ id: purchase.id, supplier: purchase.supplier, date: purchase.date, total: purchase.total })),
+      purchaseTotal: Math.round(purchaseTotal * 100) / 100,
+      invoiceCount: invoices.length,
+      quoteCount: quotes.length,
     });
   } catch (err) {
     res.status(500).json({ message: "Erreur serveur", error: err.message });

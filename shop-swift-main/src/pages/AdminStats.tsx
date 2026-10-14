@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BarChart2, TrendingUp, ShoppingBag, Banknote, RefreshCw, CircleDollarSign } from "lucide-react";
+import { BarChart2, ShoppingBag, Banknote, RefreshCw, CircleDollarSign, Package, TriangleAlert, FileText } from "lucide-react";
 import { API_URL } from "@/lib/api";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -18,6 +18,13 @@ interface Stats {
   byStatus: Record<string, number>;
   topProducts: { id: string; name: string; quantitySold: number; revenue: number; profit: number }[];
   revenueByMonth: { month: string; revenue: number; profit: number; orders: number }[];
+  totalStock: number;
+  stockValue: number;
+  lowStockProducts: { id: string; name: string; stock: number; category: string }[];
+  recentPurchases: { id: string; supplier: string; date: string; total: number }[];
+  purchaseTotal: number;
+  invoiceCount: number;
+  quoteCount: number;
 }
 
 const StatCard = ({ icon: Icon, label, value, sub }: { icon: any; label: string; value: string; sub?: string }) => (
@@ -103,6 +110,9 @@ const AdminStats = () => {
                 sub="vente − achat sur commandes complétées"
               />
               <StatCard icon={BarChart2} label="Livrées" value={String(stats.byStatus.delivered ?? 0)} />
+              <StatCard icon={Package} label="Articles en stock" value={String(stats.totalStock ?? 0)} sub={`${(stats.stockValue ?? 0).toFixed(2)} DT de valeur d'achat`} />
+              <StatCard icon={TriangleAlert} label="Alertes stock" value={String(stats.lowStockProducts?.length ?? 0)} sub="produits à 5 unités ou moins" />
+              <StatCard icon={FileText} label="Documents commerciaux" value={`${stats.invoiceCount ?? 0} factures`} sub={`${stats.quoteCount ?? 0} devis`} />
             </div>
 
             {/* Gain note — si aucun prix d'achat n'est renseigné */}
@@ -130,6 +140,25 @@ const AdminStats = () => {
                 </ResponsiveContainer>
               </CardContent>
             </Card>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              <Card>
+                <CardHeader><CardTitle>Alertes de stock</CardTitle></CardHeader>
+                <CardContent>
+                  {stats.lowStockProducts?.length ? <div className="space-y-2">{stats.lowStockProducts.map((product) => (
+                    <div key={product.id} className="flex items-center justify-between rounded border p-2 text-sm"><span>{product.name}<span className="ml-2 text-xs text-muted-foreground">{product.category}</span></span><span className={product.stock === 0 ? "font-bold text-destructive" : "font-semibold text-orange-500"}>{product.stock === 0 ? "Rupture" : `${product.stock} restant(s)`}</span></div>
+                  ))}</div> : <p className="text-sm text-muted-foreground">Aucune alerte de stock.</p>}
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader><CardTitle>Derniers achats</CardTitle></CardHeader>
+                <CardContent>
+                  {stats.recentPurchases?.length ? <div className="space-y-2">{stats.recentPurchases.map((purchase) => (
+                    <div key={purchase.id} className="flex items-center justify-between rounded border p-2 text-sm"><span>{purchase.supplier || "Sans fournisseur"}</span><span className="font-medium">{Number(purchase.total).toFixed(2)} DT</span></div>
+                  ))}</div> : <p className="text-sm text-muted-foreground">Aucun achat enregistré.</p>}
+                </CardContent>
+              </Card>
+            </div>
 
             {/* Top produits — tableau avec marge */}
             {stats.topProducts.length > 0 && (

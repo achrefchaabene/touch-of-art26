@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ShoppingCart, User, ShieldCheck, ClipboardList, Tags, BarChart2, Sun, Moon, Languages } from "lucide-react";
+import { ShoppingCart, User, ShieldCheck, ClipboardList, Tags, BarChart2, Building2, Sun, Moon, Languages } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/hooks/use-theme";
@@ -97,6 +97,11 @@ const Navbar = () => {
                   <Link to="/admin/stats">
                     <Button variant="ghost" size="icon">
                       <BarChart2 className="h-5 w-5" />
+                    </Button>
+                  </Link>
+                  <Link to="/admin/business">
+                    <Button variant="ghost" size="icon" title="Gestion commerciale">
+                      <Building2 className="h-5 w-5" />
                     </Button>
                   </Link>
                 </>

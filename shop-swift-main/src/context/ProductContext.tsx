@@ -6,6 +6,13 @@ import { resolveProductImage } from "@/lib/product-image";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:9000";
 
+export interface ProductImportResult {
+  created: Product[];
+  skipped: { row: number; message: string }[];
+  categories: string[];
+  generatedBarcodeCount: number;
+}
+
 interface ProductContextType {
   products: Product[];
   loading: boolean;
@@ -13,6 +20,7 @@ interface ProductContextType {
   updateProduct: (id: string, product: Partial<Product>, imageFile?: File | null) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
   deleteAllProducts: () => Promise<void>;
+  importProducts: (file: File) => Promise<ProductImportResult>;
   refreshProducts: () => Promise<void>;
   categories: string[];
   addCategory: (name: string) => Promise<void>;
@@ -146,6 +154,28 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const importProducts = async (file: File): Promise<ProductImportResult> => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch(`${API_URL}/api/products/import`, { method: "POST", body: formData });
+      if (!res.ok) throw new Error(await getErrorMessage(res, "Impossible d'importer le fichier."));
+
+      const result: ProductImportResult = await res.json();
+      setProducts((prev) => [...result.created.map(normalizeProduct), ...prev]);
+      setCategories((prev) => [...new Set([...prev, ...result.categories])]);
+      toast({
+        title: "Import termine",
+        description: `${result.created.length} produit(s) cree(s), ${result.skipped.length} ignore(s), ${result.generatedBarcodeCount} code(s) genere(s).`,
+      });
+      return result;
+    } catch (err: any) {
+      toast({ title: "Erreur d'import", description: err.message, variant: "destructive" });
+      throw err;
+    }
+  };
+
   const addCategory = async (name: string) => {
     try {
       const res = await fetch(`${API_URL}/api/categories`, {
@@ -219,6 +249,7 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
         updateProduct,
         deleteProduct,
         deleteAllProducts,
+        importProducts,
         refreshProducts,
         categories,
         addCategory,

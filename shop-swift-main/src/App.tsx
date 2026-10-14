@@ -14,6 +14,7 @@ import Admin from "./pages/Admin";
 import AdminOrders from "./pages/AdminOrders";
 import AdminCategories from "./pages/AdminCategories";
 import AdminStats from "./pages/AdminStats";
+import AdminBusiness from "./pages/AdminBusiness";
 import NotFound from "./pages/NotFound";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -38,6 +39,7 @@ const App = () => (
                 <Route path="/admin/orders" element={<AdminOrders />} />
                 <Route path="/admin/categories" element={<AdminCategories />} />
                 <Route path="/admin/stats" element={<AdminStats />} />
+                <Route path="/admin/business" element={<AdminBusiness />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="*" element={<NotFound />} />

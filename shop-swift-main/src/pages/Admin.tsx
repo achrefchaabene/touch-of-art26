@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { ImagePlus, Pencil, Plus, ShieldCheck, Trash2 } from "lucide-react";
+import { FileSpreadsheet, ImagePlus, Pencil, Plus, ShieldCheck, Trash2 } from "lucide-react";
 
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/context/AuthContext";
@@ -51,7 +51,7 @@ const emptyForm = {
 
 const Admin = () => {
   const { user, isAuthenticated } = useAuth();
-  const { products, addProduct, updateProduct, deleteProduct, deleteAllProducts, categories } = useProducts();
+  const { products, addProduct, updateProduct, deleteProduct, deleteAllProducts, importProducts, categories } = useProducts();
   const [form, setForm] = useState(emptyForm);
   const [searchTerm, setSearchTerm] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -59,6 +59,9 @@ const Admin = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
   const [deleteAllOpen, setDeleteAllOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isAuthenticated || user?.role !== "admin") {
@@ -164,6 +167,18 @@ const Admin = () => {
     setDeleteAllOpen(false);
   };
 
+  const handleImport = async () => {
+    if (!importFile) return;
+    setImporting(true);
+    try {
+      await importProducts(importFile);
+      setImportFile(null);
+      setImportOpen(false);
+    } finally {
+      setImporting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -174,13 +189,18 @@ const Admin = () => {
             <h1 className="font-display text-3xl font-bold">Administration</h1>
           </div>
 
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={openNew}>
-                <Plus className="mr-2 h-4 w-4" />
-                Nouveau produit
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
+              Importer Excel
+            </Button>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={openNew}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nouveau produit
+                </Button>
+              </DialogTrigger>
 
             <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
               <DialogHeader>
@@ -346,8 +366,39 @@ const Admin = () => {
                 </div>
               </form>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          </div>
         </div>
+
+        <Dialog open={importOpen} onOpenChange={setImportOpen}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Importer des produits depuis Excel</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 text-sm">
+              <p className="text-muted-foreground">
+                Fichier accepte : Excel (.xlsx, .xls) ou CSV, maximum 1 000 lignes. Les categories inconnues seront creees automatiquement.
+              </p>
+              <div className="rounded-md border bg-muted/30 p-3 font-mono text-xs leading-6">
+                Colonnes : Nom, Code-barres, Prix, Stock, Categorie, Description, Prix promo, Prix achat, Note, Image URL
+              </div>
+              <Input
+                type="file"
+                accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"
+                onChange={(event) => setImportFile(event.target.files?.[0] ?? null)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Nom et Prix sont obligatoires. Sans Code-barres, un numero libre est genere automatiquement. Sans Image URL valide, une image par defaut est utilisee et peut etre modifiee ensuite.
+              </p>
+              <div className="flex gap-2">
+                <Button className="flex-1" onClick={handleImport} disabled={!importFile || importing}>
+                  {importing ? "Importation..." : "Importer les produits"}
+                </Button>
+                <Button variant="outline" onClick={() => setImportOpen(false)} disabled={importing}>Annuler</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <AlertDialog open={deleteAllOpen} onOpenChange={setDeleteAllOpen}>
           <AlertDialogContent>

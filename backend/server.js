@@ -11,6 +11,10 @@ import productRoutes from "./routes/productRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import statsRoutes from "./routes/statsRoutes.js";
+import businessRoutes from "./routes/businessRoutes.js";
+import supplierRoutes from "./routes/supplierRoutes.js";
+import purchaseRoutes from "./routes/purchaseRoutes.js";
+import documentRoutes from "./routes/documentRoutes.js";
 
 import User from "./models/User.js";
 import Product from "./models/Product.js";
@@ -73,6 +77,10 @@ app.use("/api/products", productRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/stats", statsRoutes);
+app.use("/api/business", businessRoutes);
+app.use("/api/suppliers", supplierRoutes);
+app.use("/api/purchases", purchaseRoutes);
+app.use("/api/documents", documentRoutes);
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
 });
